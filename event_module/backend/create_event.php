@@ -1,23 +1,21 @@
 <?php
 // backend/create_event.php
 
-// Permitir solicitudes CORS (Ajustar en producción para dominios específicos)
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json; charset=UTF-8");
 
-// Manejo de la solicitud OPTIONS para CORS pre-flight
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit();
 }
 
-// Configuración de la base de datos
+// Configuración de base de datos
 $host = '127.0.0.1';
-$db   = 'my_database'; // Cambiar por el nombre de tu base de datos
-$user = 'db_user';     // Cambiar por tu usuario
-$pass = 'db_pass';     // Cambiar por tu contraseña
+$db   = 'my_database'; 
+$user = 'db_user';     
+$pass = 'db_pass';     
 $charset = 'utf8mb4';
 
 $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
@@ -27,7 +25,6 @@ $options = [
     PDO::ATTR_EMULATE_PREPARES   => false,
 ];
 
-// Conexión usando PDO
 try {
     $pdo = new PDO($dsn, $user, $pass, $options);
 } catch (\PDOException $e) {
@@ -36,14 +33,12 @@ try {
     exit();
 }
 
-// Solo permitir solicitudes POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['error' => 'Método no permitido. Utilice POST.']);
     exit();
 }
 
-// Obtener datos del cuerpo de la solicitud JSON
 $inputJSON = file_get_contents('php://input');
 $input = json_decode($inputJSON, true);
 
@@ -53,13 +48,34 @@ if (!$input) {
     exit();
 }
 
-// Validaciones básicas requeridas
+// Validaciones del Evento
 $errors = [];
-if (empty($input['title'])) $errors[] = 'El título es requerido.';
+if (empty($input['title'])) $errors[] = 'El título del evento es requerido.';
 if (empty($input['slug'])) $errors[] = 'El slug es requerido.';
 if (empty($input['event_date_start'])) $errors[] = 'La fecha de inicio es requerida.';
 if (empty($input['event_date_end'])) $errors[] = 'La fecha de fin es requerida.';
-if (empty($input['organizer_id'])) $errors[] = 'El ID del organizador es requerido.';
+if (empty($input['company_id'])) $errors[] = 'El ID de la empresa (company_id) es requerido.';
+
+// Validaciones de Tickets
+if (empty($input['ticket_tiers']) || !is_array($input['ticket_tiers'])) {
+    $errors[] = 'Debe proporcionar al menos una categoría de ticket.';
+} else {
+    foreach ($input['ticket_tiers'] as $index => $tier) {
+        if (empty($tier['name'])) $errors[] = "El nombre del ticket en la posición $index es requerido.";
+        if (!isset($tier['capacity']) || $tier['capacity'] < 1) $errors[] = "El aforo del ticket '{$tier['name']}' debe ser mayor a 0.";
+        
+        if (empty($tier['phases']) || !is_array($tier['phases'])) {
+            $errors[] = "El ticket '{$tier['name']}' debe tener al menos una fase de precio.";
+        } else {
+            foreach ($tier['phases'] as $pIndex => $phase) {
+                if (empty($phase['phase_name'])) $errors[] = "Falta el nombre de la fase en el ticket '{$tier['name']}'.";
+                if (!isset($phase['price']) || $phase['price'] < 0) $errors[] = "Precio inválido en fase de '{$tier['name']}'.";
+                if (empty($phase['start_date'])) $errors[] = "Falta fecha de inicio en fase de '{$tier['name']}'.";
+                if (empty($phase['end_date'])) $errors[] = "Falta fecha límite en fase de '{$tier['name']}'.";
+            }
+        }
+    }
+}
 
 if (!empty($errors)) {
     http_response_code(400);
@@ -67,24 +83,25 @@ if (!empty($errors)) {
     exit();
 }
 
-// Inserción en la base de datos usando sentencias preparadas (Prepared Statements) para prevenir inyecciones SQL
-$sql = "INSERT INTO events (
+// Iniciar Transacción
+try {
+    $pdo->beginTransaction();
+
+    // 1. Insertar Evento
+    $sqlEvent = "INSERT INTO events (
             title, slug, description, category, 
             event_date_start, event_date_end, venue_name, 
             venue_address, city, country, banner_image, 
-            organizer_id, status
+            company_id, status
         ) VALUES (
             :title, :slug, :description, :category, 
             :event_date_start, :event_date_end, :venue_name, 
             :venue_address, :city, :country, :banner_image, 
-            :organizer_id, :status
+            :company_id, :status
         )";
-
-try {
-    $stmt = $pdo->prepare($sql);
-    
-    // Ejecutar la consulta con los valores, asignando null o valores por defecto a los opcionales
-    $stmt->execute([
+        
+    $stmtEvent = $pdo->prepare($sqlEvent);
+    $stmtEvent->execute([
         ':title' => $input['title'],
         ':slug' => $input['slug'],
         ':description' => $input['description'] ?? null,
@@ -96,27 +113,59 @@ try {
         ':city' => $input['city'] ?? null,
         ':country' => $input['country'] ?? null,
         ':banner_image' => $input['banner_image'] ?? null,
-        ':organizer_id' => $input['organizer_id'],
+        ':company_id' => $input['company_id'],
         ':status' => $input['status'] ?? 'draft',
     ]);
     
-    $newId = $pdo->lastInsertId();
+    $eventId = $pdo->lastInsertId();
+
+    // 2. Insertar Categorías de Tickets
+    $sqlTier = "INSERT INTO ticket_tiers (event_id, name, capacity) VALUES (:event_id, :name, :capacity)";
+    $stmtTier = $pdo->prepare($sqlTier);
+
+    // 3. Insertar Fases de Precios
+    $sqlPhase = "INSERT INTO ticket_pricing_phases (ticket_tier_id, phase_name, price, start_date, end_date) 
+                 VALUES (:ticket_tier_id, :phase_name, :price, :start_date, :end_date)";
+    $stmtPhase = $pdo->prepare($sqlPhase);
+
+    foreach ($input['ticket_tiers'] as $tier) {
+        $stmtTier->execute([
+            ':event_id' => $eventId,
+            ':name' => $tier['name'],
+            ':capacity' => $tier['capacity']
+        ]);
+        $tierId = $pdo->lastInsertId();
+
+        foreach ($tier['phases'] as $phase) {
+            $stmtPhase->execute([
+                ':ticket_tier_id' => $tierId,
+                ':phase_name' => $phase['phase_name'],
+                ':price' => $phase['price'],
+                ':start_date' => $phase['start_date'],
+                ':end_date' => $phase['end_date']
+            ]);
+        }
+    }
+
+    // Confirmar todas las inserciones
+    $pdo->commit();
     
-    // Respuesta de éxito (201 Created)
     http_response_code(201);
     echo json_encode([
-        'message' => 'Evento creado exitosamente.',
-        'event_id' => $newId
+        'message' => 'Evento y tickets creados exitosamente.',
+        'event_id' => $eventId
     ]);
 
 } catch (\PDOException $e) {
-    // Manejo de error para slug duplicado (violación de índice único, código SQLSTATE 23000)
+    // Si hay cualquier error, revertimos todo
+    $pdo->rollBack();
+    
     if ($e->getCode() == 23000) {
         http_response_code(400);
         echo json_encode(['error' => 'El slug proporcionado ya está en uso.']);
     } else {
         http_response_code(500);
-        // En producción no se debe mostrar $e->getMessage() directamente
-        echo json_encode(['error' => 'Error al crear el evento.', 'details' => $e->getMessage()]);
+        echo json_encode(['error' => 'Error de base de datos al crear el evento.', 'details' => $e->getMessage()]);
     }
 }
+?>
