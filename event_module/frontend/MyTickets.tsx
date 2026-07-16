@@ -97,7 +97,7 @@ const MyTickets: React.FC = () => {
                                     </div>
                                     
                                     <div style={{ backgroundColor: '#F8FAFC', padding: '10px', borderRadius: '12px', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', alignItems: 'center', width: 'fit-content' }}>
-                                        <QRCodeSVG value={t.qr_code} size={100} />
+                                        <QRCodeSVG value={t.qr_code} size={200} />
                                         <span style={{ fontSize: '0.7rem', color: '#94A3B8', marginTop: '8px' }}>Escanear ingreso</span>
                                     </div>
                                 </div>
