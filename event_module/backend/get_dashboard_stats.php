@@ -26,12 +26,12 @@ try {
     // Total Ingresos y Tickets Vendidos
     $sqlStats = "
         SELECT 
-            (SELECT COALESCE(SUM(o2.total_amount), 0) FROM ORDERS o2 JOIN EVENTS e2 ON o2.event_id = e2.event_id WHERE e2.organizer_id = :organizer_id AND o2.order_status = 'confirmed') as total_revenue,
-            (SELECT COALESCE(SUM(oi2.quantity), 0) FROM ORDER_ITEMS oi2 JOIN ORDERS o3 ON oi2.order_id = o3.order_id JOIN EVENTS e3 ON o3.event_id = e3.event_id WHERE e3.organizer_id = :organizer_id AND o3.order_status = 'confirmed') as total_tickets_sold
+            (SELECT COALESCE(SUM(o2.total_amount), 0) FROM ORDERS o2 JOIN EVENTS e2 ON o2.event_id = e2.event_id WHERE e2.organizer_id = :org_id_1 AND o2.order_status = 'confirmed') as total_revenue,
+            (SELECT COALESCE(SUM(oi2.quantity), 0) FROM ORDER_ITEMS oi2 JOIN ORDERS o3 ON oi2.order_id = o3.order_id JOIN EVENTS e3 ON o3.event_id = e3.event_id WHERE e3.organizer_id = :org_id_2 AND o3.order_status = 'confirmed') as total_tickets_sold
     ";
     
     $stmtStats = $pdo->prepare($sqlStats);
-    $stmtStats->execute([':organizer_id' => $organizer_id]);
+    $stmtStats->execute([':org_id_1' => $organizer_id, ':org_id_2' => $organizer_id]);
     $stats = $stmtStats->fetch();
 
     // Real Attendance Calculation
