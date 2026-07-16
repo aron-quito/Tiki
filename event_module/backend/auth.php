@@ -80,7 +80,7 @@ if ($action === 'login') {
     
     try {
         if ($role === 'organizer') {
-            $ruc = $input['ruc'] ?? '';
+            $ruc = !empty($input['ruc']) ? $input['ruc'] : 'R-' . time(); // Ensure unique RUC to avoid 23000
             $company_name = $input['company_name'] ?? '';
             $trade_name = $input['trade_name'] ?? $company_name;
             $corp_phone = $input['corporate_phone_number'] ?? $phone_number;
@@ -91,8 +91,9 @@ if ($action === 'login') {
         } else {
             $first_name = $input['first_name'] ?? '';
             $last_name = $input['last_name'] ?? '';
-            $national_id = !empty($input['national_id']) ? $input['national_id'] : 'DNI-' . time() . rand(10,99);
-            $foreign_id = !empty($input['foreigners_identity_card']) ? $input['foreigners_identity_card'] : 'EXT-' . time() . rand(10,99);
+            // Make sure these fit in VARCHAR(15). time() is 10 chars.
+            $national_id = !empty($input['national_id']) ? $input['national_id'] : 'D-' . time();
+            $foreign_id = !empty($input['foreigners_identity_card']) ? $input['foreigners_identity_card'] : 'E-' . time();
             $birthday = !empty($input['birthday']) ? $input['birthday'] : '2000-01-01';
 
             $stmt = $pdo->prepare("INSERT INTO CUSTOMERS (email, password_hash, nickname, phone_number, profile_image_url, national_id, foreigners_identity_card, birthday, first_name, last_name) 
