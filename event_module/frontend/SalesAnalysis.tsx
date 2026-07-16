@@ -195,7 +195,7 @@ const SalesAnalysis: React.FC = () => {
                                             <tr key={tt.ticket_type_id} style={{ borderBottom: '1px solid #F1F5F9' }}>
                                                 <td style={{ padding: '12px', fontWeight: '500' }}>{tt.ticket_type_name}</td>
                                                 <td style={{ padding: '12px' }}>${parseFloat(tt.price).toFixed(2)}</td>
-                                                <td style={{ padding: '12px' }}>{tt.quantity_sold} / {tt.quantity_total}</td>
+                                                <td style={{ padding: '12px' }}>{tt.quantity_sold} / {tt.quantity_total > 0 ? tt.quantity_total : '∞'}</td>
                                                 <td style={{ padding: '12px', minWidth: '100px' }}>
                                                     <span style={{ color: '#10B981', fontWeight: '500' }}>{tt.quantity_checked_in}</span> / {tt.quantity_sold}
                                                 </td>

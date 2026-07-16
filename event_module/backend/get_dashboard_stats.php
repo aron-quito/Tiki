@@ -26,12 +26,8 @@ try {
     // Total Ingresos y Tickets Vendidos
     $sqlStats = "
         SELECT 
-            COALESCE(SUM(o.total_amount), 0) as total_revenue,
-            COALESCE(SUM(oi.quantity), 0) as total_tickets_sold
-        FROM ORDERS o
-        JOIN ORDER_ITEMS oi ON o.order_id = oi.order_id
-        JOIN EVENTS e ON o.event_id = e.event_id
-        WHERE e.organizer_id = :organizer_id AND o.order_status = 'confirmed'
+            (SELECT COALESCE(SUM(o2.total_amount), 0) FROM ORDERS o2 JOIN EVENTS e2 ON o2.event_id = e2.event_id WHERE e2.organizer_id = :organizer_id AND o2.order_status = 'confirmed') as total_revenue,
+            (SELECT COALESCE(SUM(oi2.quantity), 0) FROM ORDER_ITEMS oi2 JOIN ORDERS o3 ON oi2.order_id = o3.order_id JOIN EVENTS e3 ON o3.event_id = e3.event_id WHERE e3.organizer_id = :organizer_id AND o3.order_status = 'confirmed') as total_tickets_sold
     ";
     
     $stmtStats = $pdo->prepare($sqlStats);
