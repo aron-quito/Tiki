@@ -28,11 +28,17 @@ $options = [
     PDO::ATTR_EMULATE_PREPARES   => false,
 ];
 
+// Aiven and other cloud MySQL providers require SSL
+if (getenv('MYSQL_SSL')) {
+    $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
+    $options[PDO::MYSQL_ATTR_SSL_CA] = '';
+}
+
 try {
     $pdo = new PDO($dsn, $user, $pass, $options);
 } catch (\PDOException $e) {
     http_response_code(500);
-    echo json_encode(['error' => 'Error de conexión a la base de datos.']);
+    echo json_encode(['error' => 'Error de conexión a la base de datos.', 'detail' => $e->getMessage()]);
     exit();
 }
 
