@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { ArrowLeft, Camera, Keyboard, CheckCircle, XCircle } from 'lucide-react';
 // @ts-ignore
-import { Html5Qrcode } from 'html5-qrcode';
+import { Html5QrcodeScanner } from 'html5-qrcode';
 import './DashboardOverview.css'; // Reusing styles
 
 interface TicketSearchRes {
@@ -33,34 +33,13 @@ const AttendanceControl: React.FC = () => {
     // UI State
     const [message, setMessage] = useState<{type: 'success'|'error', text: string} | null>(null);
 
-    const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
+    const html5QrCodeRef = useRef<any>(null);
+
+    
 
 
 
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files.length > 0) {
-            const file = e.target.files[0];
-            setMessage(null);
-            
-            try {
-                let scanner = html5QrCodeRef.current;
-                if (!scanner) {
-                    scanner = new Html5Qrcode("hidden-reader");
-                    html5QrCodeRef.current = scanner;
-                }
-                
-                const decodedText = await scanner.scanFile(file as any, true);
-                handleRegisterAttendance(decodedText);
-            } catch (err) {
-                setMessage({ type: 'error', text: 'No se pudo leer el código QR en la imagen. Intenta tomar la foto más nítida.' });
-            }
-            
-            // Clear the input so the same file can be selected again
-            if (fileInputRef.current) {
-                fileInputRef.current.value = '';
-            }
-        }
-    };
+    
 
     const handleRegisterAttendance = async (identifier: string) => {
         setMessage(null);
@@ -85,6 +64,34 @@ const AttendanceControl: React.FC = () => {
             setMessage({ type: 'error', text: 'Error de red' });
         }
     };
+
+    const handleRegisterRef = useRef(handleRegisterAttendance);
+    useEffect(() => {
+        handleRegisterRef.current = handleRegisterAttendance;
+    }, [handleRegisterAttendance]);
+
+    useEffect(() => {
+        if (mode === 'camera') {
+            const scanner = new Html5QrcodeScanner(
+                "live-reader",
+                { fps: 10, qrbox: { width: 250, height: 250 }, supportedScanTypes: [0] },
+                false
+            );
+            
+            scanner.render(
+                (decodedText) => {
+                    handleRegisterRef.current(decodedText);
+                    scanner.pause(true);
+                    setTimeout(() => scanner.resume(), 3000); // Wait 3s before next scan
+                },
+                (err) => { /* ignore */ }
+            );
+
+            return () => {
+                scanner.clear().catch(console.error);
+            };
+        }
+    }, [mode]);
 
     const handleRemoveAttendance = async (ticket_id: number) => {
         if (!window.confirm("¿Estás seguro de que quieres anular el ingreso de este ticket?")) return;
@@ -136,7 +143,7 @@ const AttendanceControl: React.FC = () => {
     return (
         <div className="overview-container" style={{ padding: '20px', maxWidth: '800px', margin: '0 auto', position: 'relative' }}>
             {/* Div oculto permanente para procesar la imagen sin que react lo destruya */}
-            <div id="hidden-reader" style={{ position: 'absolute', top: '-9999px', width: '300px', height: '300px' }}></div>
+            
             
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '30px' }}>
                 <button onClick={() => navigate('/events')} className="btn-ghost" style={{ padding: '8px' }}>
@@ -169,36 +176,18 @@ const AttendanceControl: React.FC = () => {
                 </div>
             )}
 
+            
             {/* Camera Mode */}
             {mode === 'camera' && (
-                <div className="section-card" style={{ padding: '40px 20px', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', textAlign: 'center' }}>
-                    
-                    <Camera size={48} style={{ color: '#4F46E5', marginBottom: '20px' }} />
-                    <h3 style={{ margin: '0 0 10px 0', color: '#1E293B' }}>Escanear Ticket</h3>
-                    <p style={{ color: '#64748B', marginBottom: '30px' }}>
-                        Toma una foto del código QR o selecciona una imagen de tu galería para registrar la asistencia.
+                <div className="section-card" style={{ padding: '20px', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', textAlign: 'center' }}>
+                    <h3 style={{ margin: '0 0 10px 0', color: '#1E293B' }}>Escanear Ticket en Vivo</h3>
+                    <p style={{ color: '#64748B', marginBottom: '20px' }}>
+                        Apunta la cámara de tu dispositivo hacia el código QR de la entrada.
                     </p>
-                    
-                    <input 
-                        type="file" 
-                        accept="image/*" 
-                        capture="environment" 
-                        ref={fileInputRef} 
-                        onChange={handleFileChange} 
-                        style={{ display: 'none' }} 
-                    />
-                    
-                    <button 
-                        onClick={() => fileInputRef.current?.click()}
-                        style={{ padding: '15px 30px', backgroundColor: '#4F46E5', color: 'white', border: 'none', borderRadius: '8px', fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '10px', boxShadow: '0 4px 6px rgba(79, 70, 229, 0.3)' }}
-                    >
-                        <Camera size={24} />
-                        Abrir Cámara / Galería
-                    </button>
+                    <div id="live-reader" style={{ width: '100%', maxWidth: '500px', margin: '0 auto', overflow: 'hidden', borderRadius: '8px' }}></div>
                 </div>
             )}
-
-            {/* Manual Mode */}
+{/* Manual Mode */}
             {mode === 'manual' && (
                 <div className="section-card" style={{ padding: '20px', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
                     <form onSubmit={handleSearch} style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
