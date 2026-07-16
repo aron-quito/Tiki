@@ -1,3 +1,4 @@
+import { API_URL } from './config';
 import React, { useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { BarChart2, Search, Calendar, Users, DollarSign } from 'lucide-react';
@@ -54,7 +55,7 @@ const SalesAnalysis: React.FC = () => {
     useEffect(() => {
         const fetchEvents = async () => {
             try {
-                const res = await fetch('http://localhost:8000/get_events.php', {
+                const res = await fetch(`${API_URL}/get_events.php`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const data = await res.json();
@@ -78,7 +79,7 @@ const SalesAnalysis: React.FC = () => {
         const fetchAnalysis = async () => {
             setLoading(true);
             try {
-                const res = await fetch(`http://localhost:8000/get_sales_analysis.php?event_id=${selectedEventId}`, {
+                const res = await fetch(`${API_URL}/get_sales_analysis.php?event_id=${selectedEventId}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const data = await res.json();
@@ -107,7 +108,7 @@ const SalesAnalysis: React.FC = () => {
         
         setSearching(true);
         try {
-            const res = await fetch(`http://localhost:8000/search_ticket.php?event_id=${selectedEventId}&q=${encodeURIComponent(q)}`, {
+            const res = await fetch(`${API_URL}/search_ticket.php?event_id=${selectedEventId}&q=${encodeURIComponent(q)}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();

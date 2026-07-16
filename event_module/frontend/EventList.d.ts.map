@@ -1,1 +1,1 @@
-{"version":3,"file":"EventList.d.ts","sourceRoot":"","sources":["EventList.tsx"],"names":[],"mappings":"AAAA,OAAO,KAA8B,MAAM,OAAO,CAAC;AAEnD,OAAO,iBAAiB,CAAC;AAezB,QAAA,MAAM,SAAS,EAAE,KAAK,CAAC,EA8GtB,CAAC;AAEF,eAAe,SAAS,CAAC"}
+{"version":3,"file":"EventList.d.ts","sourceRoot":"","sources":["EventList.tsx"],"names":[],"mappings":"AACA,OAAO,KAA8B,MAAM,OAAO,CAAC;AAEnD,OAAO,iBAAiB,CAAC;AAgBzB,QAAA,MAAM,SAAS,EAAE,KAAK,CAAC,EAmJtB,CAAC;AAEF,eAAe,SAAS,CAAC"}

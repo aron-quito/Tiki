@@ -1,3 +1,4 @@
+import { API_URL } from './config';
 import React, { useEffect, useState } from 'react';
 import { Calendar, MapPin, Users, Activity, ClipboardCheck } from 'lucide-react';
 import './EventList.css';
@@ -25,7 +26,7 @@ const EventList: React.FC = () => {
     useEffect(() => {
         const fetchEvents = async () => {
             try {
-                const response = await fetch('http://localhost:8000/get_events.php', {
+                const response = await fetch(`${API_URL}/get_events.php`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }

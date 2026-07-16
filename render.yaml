@@ -1,0 +1,43 @@
+# Render Blueprint — Tiki Events Platform
+# https://render.com/docs/blueprint-spec
+
+services:
+  # ── Backend (PHP + Apache via Docker) ──
+  - type: web
+    name: tiki-backend
+    runtime: docker
+    dockerfilePath: ./event_module/backend/Dockerfile
+    dockerContext: ./event_module/backend
+    plan: free
+    envVars:
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASS
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        sync: false
+      - key: PORT
+        value: 10000
+
+  # ── Frontend (React Static Site) ──
+  - type: web
+    name: tiki-frontend
+    runtime: static
+    buildCommand: cd event_module/frontend && npm install && npm run build
+    staticPublishPath: event_module/frontend/dist
+    plan: free
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        sync: false

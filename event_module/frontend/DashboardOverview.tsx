@@ -1,3 +1,4 @@
+import { API_URL } from './config';
 import React, { useEffect, useState } from 'react';
 import { Users, Ticket, TrendingUp, DollarSign, Calendar } from 'lucide-react';
 import { useAuth } from './AuthContext';
@@ -25,7 +26,7 @@ const DashboardOverview: React.FC = () => {
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const response = await fetch('http://localhost:8000/get_dashboard_stats.php', {
+                const response = await fetch(`${API_URL}/get_dashboard_stats.php`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }

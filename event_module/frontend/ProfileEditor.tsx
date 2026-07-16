@@ -1,3 +1,4 @@
+import { API_URL } from './config';
 import React, { useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { User, Building2, Phone, Calendar, CreditCard, Mail, Save, AlertCircle, CheckCircle } from 'lucide-react';
@@ -13,7 +14,7 @@ const ProfileEditor: React.FC = () => {
     useEffect(() => {
         const fetchProfile = async () => {
             try {
-                const response = await fetch('http://localhost:8000/get_profile.php', {
+                const response = await fetch(`${API_URL}/get_profile.php`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const data = await response.json();
@@ -49,7 +50,7 @@ const ProfileEditor: React.FC = () => {
         setSuccess('');
 
         try {
-            const response = await fetch('http://localhost:8000/update_profile.php', {
+            const response = await fetch(`${API_URL}/update_profile.php`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

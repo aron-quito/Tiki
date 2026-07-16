@@ -1,3 +1,4 @@
+import { API_URL } from './config';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
@@ -15,7 +16,7 @@ const MyTickets: React.FC = () => {
     useEffect(() => {
         const fetchTickets = async () => {
             try {
-                const res = await fetch('http://localhost:8000/get_my_tickets.php', {
+                const res = await fetch(`${API_URL}/get_my_tickets.php`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const data = await res.json();

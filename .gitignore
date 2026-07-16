@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+
+# Build output
+event_module/frontend/dist/
+
+# TypeScript generated files
+*.d.ts
+*.d.ts.map
+*.js.map
+!vite.config.ts
+
+# Patches and backups
+*.orig
+*.rej
+*.bak
+*.patch
+
+# Test/debug PHP files
+event_module/backend/check_*.php
+event_module/backend/test_*.php
+event_module/backend/time_test*.php
+event_module/backend/fix_*.php
+event_module/backend/run_mock.php
+event_module/backend/reset_events.php
+event_module/backend/get_token.php
+event_module/backend/mock_sales3.sql
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

@@ -1,3 +1,4 @@
+import { API_URL } from './config';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Calendar, MapPin, Tag } from 'lucide-react';
@@ -15,7 +16,7 @@ const EventDiscovery: React.FC = () => {
     const fetchEvents = async () => {
         setIsLoading(true);
         try {
-            let url = 'http://localhost:8000/get_public_events.php?';
+            let url = `${API_URL}/get_public_events.php?`;
             if (searchQuery) url += `q=${encodeURIComponent(searchQuery)}&`;
             if (topicFilter) url += `topic=${encodeURIComponent(topicFilter)}`;
             

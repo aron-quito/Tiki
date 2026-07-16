@@ -1,3 +1,4 @@
+import { API_URL } from './config';
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Calendar, MapPin, Tag, ArrowLeft, Clock, CreditCard, ShieldCheck, XCircle } from 'lucide-react';
@@ -26,14 +27,14 @@ const EventDetailClient: React.FC = () => {
         const fetchDetails = async () => {
             try {
                 // 1. Get Event Details
-                const resEvent = await fetch(`http://localhost:8000/get_event_details.php?event_id=${id}`);
+                const resEvent = await fetch(`${API_URL}/get_event_details.php?event_id=${id}`);
                 const dataEvent = await resEvent.json();
                 
                 if (!resEvent.ok) throw new Error(dataEvent.error);
                 setEvent(dataEvent);
                 
                 // 2. Get Available Tickets
-                const resTix = await fetch(`http://localhost:8000/get_available_tickets.php?event_id=${id}`);
+                const resTix = await fetch(`${API_URL}/get_available_tickets.php?event_id=${id}`);
                 const dataTix = await resTix.json();
                 
                 if (resTix.ok && dataTix.tickets) {
@@ -96,7 +97,7 @@ const EventDetailClient: React.FC = () => {
         
         setIsLoading(true);
         try {
-            const res = await fetch('http://localhost:8000/reserve_tickets.php', {
+            const res = await fetch(`${API_URL}/reserve_tickets.php`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ event_id: id, tickets: selectedTickets })
@@ -121,7 +122,7 @@ const EventDetailClient: React.FC = () => {
         
         setIsPaying(true);
         try {
-            const res = await fetch('http://localhost:8000/confirm_purchase.php', {
+            const res = await fetch(`${API_URL}/confirm_purchase.php`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ order_id: reservation.order_id })
@@ -146,7 +147,7 @@ const EventDetailClient: React.FC = () => {
         if (!reservation) return;
         
         try {
-            const res = await fetch('http://localhost:8000/cancel_order.php', {
+            const res = await fetch(`${API_URL}/cancel_order.php`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ order_id: reservation.order_id })

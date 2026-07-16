@@ -1,3 +1,4 @@
+import { API_URL } from './config';
 import React, { useState, useEffect, type ChangeEvent } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronRight, ChevronLeft, Save, Calendar, MapPin, Ticket, AlertTriangle, CheckCircle, Send } from 'lucide-react';
@@ -118,7 +119,7 @@ const EventEditor: React.FC = () => {
     useEffect(() => {
         if (id) {
             setIsFetching(true);
-            fetch(`http://localhost:8000/get_event_details.php?id=${id}`, {
+            fetch(`${API_URL}/get_event_details.php?id=${id}`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
@@ -354,7 +355,7 @@ const EventEditor: React.FC = () => {
         const dataToSend = { ...formData, event_status: targetStatus };
 
         try {
-            const response = await fetch('http://localhost:8000/save_event.php', {
+            const response = await fetch(`${API_URL}/save_event.php`, {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',

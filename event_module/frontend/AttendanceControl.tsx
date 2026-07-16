@@ -1,3 +1,4 @@
+import { API_URL } from './config';
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
@@ -64,7 +65,7 @@ const AttendanceControl: React.FC = () => {
     const handleRegisterAttendance = async (identifier: string) => {
         setMessage(null);
         try {
-            const res = await fetch(`http://localhost:8000/register_attendance.php`, {
+            const res = await fetch(`${API_URL}/register_attendance.php`, {
                 method: 'POST',
                 headers: { 
                     'Authorization': `Bearer ${token}`,
@@ -89,7 +90,7 @@ const AttendanceControl: React.FC = () => {
         if (!window.confirm("¿Estás seguro de que quieres anular el ingreso de este ticket?")) return;
         
         try {
-            const res = await fetch(`http://localhost:8000/remove_attendance.php`, {
+            const res = await fetch(`${API_URL}/remove_attendance.php`, {
                 method: 'POST',
                 headers: { 
                     'Authorization': `Bearer ${token}`,
@@ -113,7 +114,7 @@ const AttendanceControl: React.FC = () => {
     const handleSearch = async (e?: React.FormEvent) => {
         if(e) e.preventDefault();
         try {
-            const res = await fetch(`http://localhost:8000/search_ticket.php?event_id=${id}&q=${encodeURIComponent(searchQuery)}`, {
+            const res = await fetch(`${API_URL}/search_ticket.php?event_id=${id}&q=${encodeURIComponent(searchQuery)}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();

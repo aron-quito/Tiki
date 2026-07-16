@@ -1,13 +1,27 @@
 <?php
 // backend/config.php
 
-$host = getenv('DB_HOST') ?: '127.0.0.1';
-$db   = getenv('DB_NAME') ?: 'my_database'; 
-$user = getenv('DB_USER') ?: 'db_user';     
-$pass = getenv('DB_PASS') ?: 'db_pass';     
+// --- CORS ---
+$allowed_origin = getenv('FRONTEND_URL') ?: '*';
+header("Access-Control-Allow-Origin: $allowed_origin");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
+header("Content-Type: application/json; charset=UTF-8");
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
+// --- Database ---
+$host    = getenv('DB_HOST') ?: '127.0.0.1';
+$db_port = getenv('DB_PORT') ?: '3306';
+$db      = getenv('DB_NAME') ?: 'my_database'; 
+$user    = getenv('DB_USER') ?: 'db_user';     
+$pass    = getenv('DB_PASS') ?: 'db_pass';     
 $charset = 'utf8mb4';
 
-$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
+$dsn = "mysql:host=$host;port=$db_port;dbname=$db;charset=$charset";
 $options = [
     PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
@@ -22,7 +36,7 @@ try {
     exit();
 }
 
-define('JWT_SECRET', 'super_secret_key_for_this_app_12345');
+define('JWT_SECRET', getenv('JWT_SECRET') ?: 'super_secret_key_for_this_app_12345');
 
 function base64url_encode($data) {
     return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');

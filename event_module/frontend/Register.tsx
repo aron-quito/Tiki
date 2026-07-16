@@ -1,3 +1,4 @@
+import { API_URL } from './config';
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 
@@ -25,7 +26,7 @@ const Register: React.FC = () => {
         setIsLoading(true);
         try {
             const payload = { action: 'register', role, ...formData };
-            const response = await fetch('http://localhost:8000/auth.php', {
+            const response = await fetch(`${API_URL}/auth.php`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
