@@ -65,9 +65,23 @@
 .stat-change.negative { color: var(--color-danger); }
 
 /* Placeholder Chart */
-.charts-section {
+.recent-activity-list {
     display: flex;
     flex-direction: column;
+}
+
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .overview-container {
+        padding: 0 !important;
+    }
 }
 
 .chart-card {

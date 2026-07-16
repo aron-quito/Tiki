@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Calendar, MapPin, Users, Activity } from 'lucide-react';
+import { Calendar, MapPin, Users, Activity, ClipboardCheck } from 'lucide-react';
 import './EventList.css';
 import { Link } from 'react-router-dom';
+import { useAuth } from './AuthContext';
 
 interface EventData {
-    id: number;
+    event_id: number;
     title: string;
     event_date_start: string;
     event_date_end: string;
@@ -19,11 +20,16 @@ const EventList: React.FC = () => {
     const [events, setEvents] = useState<EventData[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
+    const { token } = useAuth();
 
     useEffect(() => {
         const fetchEvents = async () => {
             try {
-                const response = await fetch('http://localhost:8000/get_events.php?company_id=1');
+                const response = await fetch('http://localhost:8000/get_events.php', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
                 const data = await response.json();
                 
                 if (!response.ok) {
@@ -39,7 +45,7 @@ const EventList: React.FC = () => {
         };
 
         fetchEvents();
-    }, []);
+    }, [token]);
 
     const formatDate = (dateString: string) => {
         const options: Intl.DateTimeFormatOptions = { 
@@ -62,6 +68,9 @@ const EventList: React.FC = () => {
     if (loading) return <div className="loading-state">Cargando eventos...</div>;
     if (error) return <div className="error-state">Error: {error}</div>;
 
+    const activeEvents = events.filter(e => e.status !== 'completed' && e.status !== 'cancelled');
+    const pastEvents = events.filter(e => e.status === 'completed' || e.status === 'cancelled');
+
     return (
         <div className="event-list-container">
             <div className="list-header">
@@ -76,41 +85,81 @@ const EventList: React.FC = () => {
                     <p>Aún no has creado ningún evento. Comienza creando tu primer evento empresarial.</p>
                 </div>
             ) : (
-                <div className="events-grid">
-                    {events.map(event => (
-                        <div key={event.id} className="event-card">
-                            <div className="event-card-header">
-                                <h3>{event.title}</h3>
-                                {getStatusBadge(event.status)}
-                            </div>
-                            
-                            <div className="event-card-body">
-                                <div className="event-detail">
-                                    <Calendar size={16} />
-                                    <span>{formatDate(event.event_date_start)}</span>
+                <>
+                    <h3 style={{ marginTop: '20px', marginBottom: '15px', color: '#1E293B' }}>Eventos Activos</h3>
+                    <div className="events-grid">
+                        {activeEvents.map(event => (
+                            <div key={event.event_id} className="event-card">
+                                <div className="event-card-header">
+                                    <h3>{event.title}</h3>
+                                    {getStatusBadge(event.status)}
                                 </div>
-                                <div className="event-detail">
-                                    <MapPin size={16} />
-                                    <span>{event.venue_name ? `${event.venue_name}, ${event.city}` : 'Ubicación por definir'}</span>
+                                
+                                <div className="event-card-body">
+                                    <div className="event-detail">
+                                        <Calendar size={16} />
+                                        <span>{formatDate(event.event_date_start)}</span>
+                                    </div>
+                                    <div className="event-detail">
+                                        <MapPin size={16} />
+                                        <span>{event.venue_name ? `${event.venue_name}, ${event.city}` : 'Ubicación por definir'}</span>
+                                    </div>
+                                    <div className="event-detail">
+                                        <Users size={16} />
+                                        <span>Aforo: {event.total_capacity || 0} personas</span>
+                                    </div>
                                 </div>
-                                <div className="event-detail">
-                                    <Users size={16} />
-                                    <span>Aforo: {event.total_capacity || 0} personas</span>
-                                </div>
-                            </div>
 
-                            <div className="event-card-footer">
-                                <div className="event-stat">
-                                    <Activity size={16} color="#4F46E5" />
-                                    <span>Ventas activas</span>
+                                <div className="event-card-footer">
+                                    <Link to={`/events/${event.event_id}/attendance`} className="btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                        <ClipboardCheck size={16} /> Asistencia
+                                    </Link>
+                                    <Link to={`/events/edit/${event.event_id}`} className="btn-ghost">
+                                        {event.status === 'draft' ? 'Continuar Editando' : 'Ver Detalles'}
+                                    </Link>
                                 </div>
-                                <Link to={`/events/edit/${event.id}`} className="btn-ghost">
-                                    {event.status === 'draft' ? 'Continuar Editando' : 'Ver Detalles'}
-                                </Link>
                             </div>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                        {activeEvents.length === 0 && <p style={{ color: '#64748B' }}>No hay eventos activos.</p>}
+                    </div>
+
+                    {pastEvents.length > 0 && (
+                        <>
+                            <h3 style={{ marginTop: '40px', marginBottom: '15px', color: '#1E293B' }}>Eventos Finalizados o Cancelados</h3>
+                            <div className="events-grid" style={{ opacity: 0.8 }}>
+                                {pastEvents.map(event => (
+                                    <div key={event.event_id} className="event-card">
+                                        <div className="event-card-header">
+                                            <h3>{event.title}</h3>
+                                            {getStatusBadge(event.status)}
+                                        </div>
+                                        
+                                        <div className="event-card-body">
+                                            <div className="event-detail">
+                                                <Calendar size={16} />
+                                                <span>{formatDate(event.event_date_start)}</span>
+                                            </div>
+                                            <div className="event-detail">
+                                                <MapPin size={16} />
+                                                <span>{event.venue_name ? `${event.venue_name}, ${event.city}` : 'Ubicación por definir'}</span>
+                                            </div>
+                                            <div className="event-detail">
+                                                <Users size={16} />
+                                                <span>Aforo: {event.total_capacity || 0} personas</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="event-card-footer">
+                                            <Link to={`/events/edit/${event.event_id}`} className="btn-ghost">
+                                                Ver Detalles
+                                            </Link>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </>
+                    )}
+                </>
             )}
         </div>
     );

@@ -3,7 +3,7 @@
 
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
 header("Content-Type: application/json; charset=UTF-8");
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -11,29 +11,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-$host = '127.0.0.1';
-$db   = 'my_database'; 
-$user = 'db_user';     
-$pass = 'db_pass';     
-$charset = 'utf8mb4';
+require_once 'config.php';
 
-$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
-$options = [
-    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    PDO::ATTR_EMULATE_PREPARES   => false,
-];
-
-try {
-    $pdo = new PDO($dsn, $user, $pass, $options);
-} catch (\PDOException $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error de conexión.']);
-    exit();
-}
-
-$eventId = $_GET['id'] ?? null;
-$companyId = $_GET['company_id'] ?? 1;
+$user = get_auth_user();
+// Authentication is optional. Public users can view published events. Organizers can view their own drafts.
+$organizerId = ($user && $user['role'] === 'organizer') ? $user['id'] : null;
+$eventId = $_GET['event_id'] ?? ($_GET['id'] ?? null);
 
 if (!$eventId) {
     http_response_code(400);
@@ -43,8 +26,13 @@ if (!$eventId) {
 
 try {
     // 1. Obtener Evento
-    $stmt = $pdo->prepare("SELECT * FROM events WHERE id = ? AND company_id = ?");
-    $stmt->execute([$eventId, $companyId]);
+    if ($organizerId) {
+        $stmt = $pdo->prepare("SELECT event_id, title, venue_name, venue_address, city, country, event_date_start, event_date_end, cover_image_url, banner_image_url, global_capacity, has_shared_capacity, event_topic, event_status, is_featured, slug FROM EVENTS WHERE event_id = ? AND organizer_id = ?");
+        $stmt->execute([$eventId, $organizerId]);
+    } else {
+        $stmt = $pdo->prepare("SELECT event_id, title, venue_name, venue_address, city, country, event_date_start, event_date_end, cover_image_url, banner_image_url, global_capacity, has_shared_capacity, event_topic, event_status, is_featured, slug FROM EVENTS WHERE event_id = ? AND event_status = 'published'");
+        $stmt->execute([$eventId]);
+    }
     $event = $stmt->fetch();
     
     if (!$event) {
@@ -53,25 +41,27 @@ try {
         exit();
     }
     
-    // 2. Obtener Categorías de Tickets
-    $stmtTiers = $pdo->prepare("SELECT * FROM ticket_tiers WHERE event_id = ?");
-    $stmtTiers->execute([$eventId]);
-    $tiers = $stmtTiers->fetchAll();
+    // 2. Obtener Categorías
+    $stmtCat = $pdo->prepare("SELECT category_id, category_name, total_capacity, has_shared_stages FROM CATEGORIES WHERE event_id = ?");
+    $stmtCat->execute([$eventId]);
+    $event['categories'] = $stmtCat->fetchAll();
     
-    // 3. Obtener Fases para cada categoría
-    $stmtPhases = $pdo->prepare("SELECT * FROM ticket_pricing_phases WHERE ticket_tier_id = ?");
-    
-    foreach ($tiers as &$tier) {
-        $stmtPhases->execute([$tier['id']]);
-        $tier['phases'] = $stmtPhases->fetchAll();
-    }
-    
-    $event['ticket_tiers'] = $tiers;
+    // 3. Obtener Fases de Venta
+    $stmtStages = $pdo->prepare("SELECT * FROM SALE_STAGES WHERE event_id = ?");
+    $stmtStages->execute([$eventId]);
+    $event['sale_stages'] = $stmtStages->fetchAll();
+
+    // 4. Obtener Tipos de Ticket
+    $stmtTickets = $pdo->prepare("SELECT TICKET_TYPES.* FROM TICKET_TYPES 
+                                  JOIN CATEGORIES ON TICKET_TYPES.category_id = CATEGORIES.category_id 
+                                  WHERE CATEGORIES.event_id = ?");
+    $stmtTickets->execute([$eventId]);
+    $event['ticket_types'] = $stmtTickets->fetchAll();
     
     echo json_encode($event);
     
 } catch (\PDOException $e) {
     http_response_code(500);
-    echo json_encode(['error' => 'Error al obtener datos.']);
+    echo json_encode(['error' => 'Error al obtener datos.', 'details' => $e->getMessage()]);
 }
 ?>

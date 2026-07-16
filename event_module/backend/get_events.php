@@ -3,7 +3,7 @@
 
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
 header("Content-Type: application/json; charset=UTF-8");
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -11,49 +11,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-$host = '127.0.0.1';
-$db   = 'my_database'; 
-$user = 'db_user';     
-$pass = 'db_pass';     
-$charset = 'utf8mb4';
+require_once 'config.php';
 
-$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
-$options = [
-    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    PDO::ATTR_EMULATE_PREPARES   => false,
-];
-
-try {
-    $pdo = new PDO($dsn, $user, $pass, $options);
-} catch (\PDOException $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error de conexión a la base de datos.']);
+$user = get_auth_user();
+if (!$user || $user['role'] !== 'organizer') {
+    http_response_code(401);
+    echo json_encode(['error' => 'No autorizado']);
     exit();
 }
 
-// Suponiendo que la compañía actual tiene ID 1 (puedes pasarlo por parámetro en el futuro)
-$company_id = $_GET['company_id'] ?? 1;
+$organizer_id = $user['id'];
 
 try {
-    $sql = "SELECT id, title, event_date_start, event_date_end, venue_name, city, created_at, 
+    $sql = "SELECT event_id, title, event_date_start, event_date_end, venue_name, city, created_at, 
             CASE 
-                WHEN status = 'published' AND event_date_end < NOW() THEN 'completed'
-                ELSE status
+                WHEN event_status = 'published' AND event_date_end < NOW() THEN 'completed'
+                ELSE event_status
             END as status
-            FROM events 
-            WHERE company_id = :company_id 
+            FROM EVENTS 
+            WHERE organizer_id = :organizer_id 
             ORDER BY created_at DESC";
             
     $stmt = $pdo->prepare($sql);
-    $stmt->execute([':company_id' => $company_id]);
+    $stmt->execute([':organizer_id' => $organizer_id]);
     $events = $stmt->fetchAll();
     
-    // Obtener contadores de tickets para cada evento (para mostrar estadísticas)
     foreach ($events as &$event) {
-        $sqlTiers = "SELECT SUM(capacity) as total_capacity FROM ticket_tiers WHERE event_id = :event_id";
+        $sqlTiers = "SELECT SUM(total_capacity) as total_capacity FROM CATEGORIES WHERE event_id = :event_id";
         $stmtTiers = $pdo->prepare($sqlTiers);
-        $stmtTiers->execute([':event_id' => $event['id']]);
+        $stmtTiers->execute([':event_id' => $event['event_id']]);
         $tierInfo = $stmtTiers->fetch();
         $event['total_capacity'] = $tierInfo['total_capacity'] ?? 0;
     }
@@ -62,6 +48,6 @@ try {
     
 } catch (\PDOException $e) {
     http_response_code(500);
-    echo json_encode(['error' => 'Error al obtener eventos.']);
+    echo json_encode(['error' => 'Error al obtener eventos.', 'details' => $e->getMessage()]);
 }
 ?>
