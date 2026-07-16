@@ -79,19 +79,31 @@ try {
         $catId = $tt['category_id'];
         $soldThisType = $soldByTicketType[$tt['ticket_type_id']] ?? 0;
         
-        $available = $tt['quantity_total'] - $soldThisType; // Default capacity limit
+        $available = PHP_INT_MAX;
         
-        if ($tt['has_shared_stages']) {
+        // 1. Ticket Type specific limit (if not shared stages)
+        if (!$tt['has_shared_stages']) {
+            $available = min($available, $tt['quantity_total'] - $soldThisType);
+        }
+        
+        // 2. Category specific limit (if not shared capacity)
+        if (!$event['has_shared_capacity']) {
             $catAvail = $tt['category_capacity'] - $categorySold[$catId];
             $available = min($available, $catAvail);
         }
         
+        // 3. Global limit (if shared capacity)
         if ($event['has_shared_capacity'] && $globalAvailable !== null) {
             $available = min($available, $globalAvailable);
         }
         
         // Ensure non-negative
         $available = max(0, $available);
+        
+        // If it's still PHP_INT_MAX, it means no limits were applied
+        if ($available === PHP_INT_MAX) {
+            $available = 999999;
+        }
         
         $tt['available_quantity'] = $available;
         $resultTickets[] = $tt;
