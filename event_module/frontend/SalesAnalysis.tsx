@@ -200,9 +200,13 @@ const SalesAnalysis: React.FC = () => {
                                                     <span style={{ color: '#10B981', fontWeight: '500' }}>{tt.quantity_checked_in}</span> / {tt.quantity_sold}
                                                 </td>
                                                 <td style={{ padding: '12px', minWidth: '150px' }}>
-                                                    <div style={{ width: '100%', backgroundColor: '#E2E8F0', borderRadius: '4px', height: '6px' }}>
-                                                        <div style={{ width: `${percent}%`, backgroundColor: percent >= 100 ? '#10B981' : '#4F46E5', height: '100%', borderRadius: '4px' }}></div>
-                                                    </div>
+                                                    {percent === -1 ? (
+                                                        <span style={{color: '#94A3B8', fontSize: '0.85rem'}}>N/A (Ilimitado)</span>
+                                                    ) : (
+                                                        <div style={{ width: '100%', backgroundColor: '#E2E8F0', borderRadius: '4px', height: '6px' }}>
+                                                            <div style={{ width: `${percent}%`, backgroundColor: percent >= 100 ? '#10B981' : '#4F46E5', height: '100%', borderRadius: '4px' }}></div>
+                                                        </div>
+                                                    )}
                                                 </td>
                                                 <td style={{ padding: '12px', fontWeight: '600', color: '#10B981' }}>${parseFloat(tt.revenue).toFixed(2)}</td>
                                             </tr>
