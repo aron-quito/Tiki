@@ -168,7 +168,7 @@ const SalesAnalysis: React.FC = () => {
                             </div>
                             <div className="stat-content">
                                 <p className="stat-label">Tickets Vendidos (Total)</p>
-                                <h3 className="stat-value">{analysisData.total_sold} / {analysisData.total_capacity}</h3>
+                                <h3 className="stat-value">{analysisData.total_sold} / {analysisData.total_capacity > 0 ? analysisData.total_capacity : '∞'}</h3>
                             </div>
                         </div>
                     </div>
