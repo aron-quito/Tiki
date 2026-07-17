@@ -168,7 +168,7 @@ const SalesAnalysis: React.FC = () => {
                             </div>
                             <div className="stat-content">
                                 <p className="stat-label">Tickets Vendidos (Total)</p>
-                                <h3 className="stat-value">{analysisData.total_sold} / {analysisData.total_capacity > 0 ? analysisData.total_capacity : '∞'}</h3>
+                                <h3 className="stat-value">{analysisData.total_sold} {analysisData.total_capacity > 0 ? `/ ${analysisData.total_capacity}` : ''}</h3>
                             </div>
                         </div>
                     </div>
@@ -185,17 +185,17 @@ const SalesAnalysis: React.FC = () => {
                                         <th style={{ padding: '12px' }}>Vendidos / Aforo</th>
                                         <th style={{ padding: '12px' }}>Asistencia</th>
                                         <th style={{ padding: '12px' }}>Progreso de Venta</th>
-                                        <th style={{ padding: '12px' }}>Recaudado</th>
+                                        <th style={{ padding: '12px' }}>Recaudado <br/><span style={{fontSize: '0.75rem', color: '#94A3B8', fontWeight: 'normal'}}>(Pagos Confirmados)</span></th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {analysisData.ticket_types.map(tt => {
-                                        const percent = tt.quantity_total > 0 ? (tt.quantity_sold / tt.quantity_total) * 100 : 0;
+                                        const percent = tt.quantity_total > 0 ? (tt.quantity_sold / tt.quantity_total) * 100 : -1;
                                         return (
                                             <tr key={tt.ticket_type_id} style={{ borderBottom: '1px solid #F1F5F9' }}>
                                                 <td style={{ padding: '12px', fontWeight: '500' }}>{tt.ticket_type_name}</td>
                                                 <td style={{ padding: '12px' }}>${parseFloat(tt.price).toFixed(2)}</td>
-                                                <td style={{ padding: '12px' }}>{tt.quantity_sold} / {tt.quantity_total > 0 ? tt.quantity_total : '∞'}</td>
+                                                <td style={{ padding: '12px' }}>{tt.quantity_sold} {tt.quantity_total > 0 ? `/ ${tt.quantity_total}` : <span style={{fontSize: '0.8rem', color: '#94A3B8', marginLeft: '5px'}}>(Sin Límite)</span>}</td>
                                                 <td style={{ padding: '12px', minWidth: '100px' }}>
                                                     <span style={{ color: '#10B981', fontWeight: '500' }}>{tt.quantity_checked_in}</span> / {tt.quantity_sold}
                                                 </td>

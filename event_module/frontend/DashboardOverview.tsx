@@ -91,16 +91,20 @@ const DashboardOverview: React.FC = () => {
                     <h3>Resumen de Ventas por Evento</h3>
                     <div className="events-progress-list">
                         {stats.recent_events_progress.map(event => {
-                            const percent = event.total_capacity > 0 ? (event.tickets_sold / event.total_capacity) * 100 : 0;
+                            const percent = event.total_capacity > 0 ? (event.tickets_sold / event.total_capacity) * 100 : -1;
                             return (
                                 <div key={event.event_id} className="event-progress-item" style={{ marginBottom: '15px' }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
                                         <span style={{ fontWeight: '500' }}>#{event.event_id} - {event.title}</span>
-                                        <span style={{ color: '#64748B', fontSize: '0.9rem' }}>{event.tickets_sold} / {event.total_capacity > 0 ? event.total_capacity : '∞'} vendidas</span>
+                                        <span style={{ color: '#64748B', fontSize: '0.9rem' }}>{event.tickets_sold} {event.total_capacity > 0 ? `/ ${event.total_capacity}` : ''} vendidas</span>
                                     </div>
-                                    <div style={{ width: '100%', backgroundColor: '#E2E8F0', borderRadius: '4px', height: '8px', overflow: 'hidden' }}>
-                                        <div style={{ width: `${percent}%`, backgroundColor: '#4F46E5', height: '100%' }}></div>
-                                    </div>
+                                    {percent === -1 ? (
+                                        <div style={{ fontSize: '0.85rem', color: '#94A3B8' }}>Venta sin límite de aforo</div>
+                                    ) : (
+                                        <div style={{ width: '100%', backgroundColor: '#E2E8F0', borderRadius: '4px', height: '8px', overflow: 'hidden' }}>
+                                            <div style={{ width: `${percent}%`, backgroundColor: '#4F46E5', height: '100%' }}></div>
+                                        </div>
+                                    )}
                                 </div>
                             );
                         })}
